@@ -1,139 +1,129 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { TiWeatherPartlySunny } from 'react-icons/ti';
-import { FaBolt } from 'react-icons/fa';
-import Chart from 'chart.js/auto';
+import { useState, useEffect, useRef } from "react";
+import { TiWeatherPartlySunny } from "react-icons/ti";
+import { FiSun, FiMoon } from "react-icons/fi"; // Import sun and moon icons
+import { FaBolt } from "react-icons/fa";
+import Chart from "chart.js/auto";
+import axios from "axios";
 
-const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const Main = () => {
-  // Sample weather data
-  const weatherData = useMemo(
-    () => [
-      { day: 'Sun', weather: 'Sunny', powerOutcome: 200, temperature: 25, solarActivity: 80 },
-      { day: 'Mon', weather: 'Cloudy', powerOutcome: 180, temperature: 23, solarActivity: 70 },
-      { day: 'Tue', weather: 'Rainy', powerOutcome: 150, temperature: 20, solarActivity: 60 },
-      { day: 'Wed', weather: 'Partly Sunny', powerOutcome: 220, temperature: 26, solarActivity: 85 },
-      { day: 'Thu', weather: 'Thunderstorm', powerOutcome: 120, temperature: 18, solarActivity: 50 },
-      { day: 'Fri', weather: 'Clear Sky', powerOutcome: 250, temperature: 28, solarActivity: 90 },
-      { day: 'Sat', weather: 'Windy', powerOutcome: 170, temperature: 22, solarActivity: 75 },
-    ],
-    []
-  );
-
-  // Chart state and ref
-  const [chart, setChart] = useState(null);
+  const [currentWeather, setCurrentWeather] = useState(null);
+  const [futureWeather, setFutureWeather] = useState([]);
+  const [darkTheme, setDarkTheme] = useState(false);
   const chartRef = useRef(null);
 
-  // State for current time
-  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
-
-  // State for UI theme
-  const [darkTheme, setDarkTheme] = useState(false);
-
-  // Function to toggle UI theme
-  const toggleTheme = () => {
-    setDarkTheme(!darkTheme);
-  };
-
-  // Effect to update the current time every second
   useEffect(() => {
+    // Fetch current weather data
+    axios
+      .get("http://localhost:3001/api/CurrentWeather")
+      .then((response) => {
+        setCurrentWeather(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching current weather data:", error);
+      });
+
+    // Fetch future weather data
+    axios
+      .get("http://localhost:3001/api/futureWeather")
+      .then((response) => {
+        setFutureWeather(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching future weather data:", error);
+      });
+
+    // Update time every second
     const interval = setInterval(() => {
-      setCurrentTime(new Date().toLocaleTimeString());
+      setCurrentWeather((prevWeather) => {
+        if (prevWeather) {
+          return {
+            ...prevWeather,
+            time: new Date().toLocaleTimeString(),
+          };
+        }
+        return null;
+      });
     }, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // Effect to create or update the chart
   useEffect(() => {
     if (chartRef.current) {
       chartRef.current.destroy();
     }
 
-    const ctx = document.getElementById('powerChart').getContext('2d');
-    const powerData = weatherData.map((data) => data.powerOutcome);
-    const temperatureData = weatherData.map((data) => data.temperature);
-    const solarActivityData = weatherData.map((data) => data.solarActivity);
+    const ctx = document.getElementById("powerChart").getContext("2d");
+    const powerData = futureWeather.map((data) =>
+      calculateSolarPowerOutput(
+        data.temperature.max,
+        data.humidity,
+        data.windSpeed
+      )
+    );
+    const temperatureData = futureWeather.map((data) => data.temperature.max);
 
     const newChart = new Chart(ctx, {
-      type: 'line',
+      type: "line",
       data: {
-        labels: daysOfWeek,
+        labels: futureWeather.map(
+          (data) =>
+            `${daysOfWeek[new Date(data.date).getDay()]} - ${new Date(
+              data.date
+            ).toLocaleDateString()}`
+        ),
         datasets: [
           {
-            label: 'Power Outcome',
+            label: "Power",
             data: powerData,
-            borderColor: 'rgba(75, 192, 192, 1)',
+            borderColor: "rgba(75, 192, 192, 1)",
             borderWidth: 2,
             fill: false,
-            yAxisID: 'power',
+            yAxisID: "power",
           },
           {
-            label: 'Temperature',
+            label: "Temperature",
             data: temperatureData,
-            borderColor: 'rgba(255, 99, 132, 1)',
+            borderColor: "rgba(255, 99, 132, 1)",
             borderWidth: 2,
             fill: false,
-            yAxisID: 'temperature',
-          },
-          {
-            label: 'Solar Activity',
-            data: solarActivityData,
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2,
-            fill: false,
-            yAxisID: 'solar',
+            yAxisID: "temperature",
           },
         ],
       },
       options: {
         scales: {
           x: {
-            type: 'category',
+            type: "category",
           },
           y: {
             beginAtZero: true,
           },
           power: {
-            position: 'left',
+            position: "left",
             title: {
               display: true,
-              text: 'Power Outcome (MW)',
-              color: 'rgba(75, 192, 192, 1)',
+              text: "Power (MW/h)",
+              color: "rgba(75, 192, 192, 1)",
             },
           },
           temperature: {
-            position: 'right',
+            position: "right",
             title: {
               display: true,
-              text: 'Temperature (°C)',
-              color: 'rgba(255, 99, 132, 1)',
+              text: "Temperature (°C)",
+              color: "rgba(255, 99, 132, 1)",
             },
             grid: {
               drawOnChartArea: false,
-            },
-          },
-          solar: {
-            position: 'right',
-            title: {
-              display: true,
-              text: 'Solar Activity',
-              color: 'rgba(54, 162, 235, 1)',
-            },
-            grid: {
-              drawOnChartArea: false,
-            },
-            ticks: {
-              callback: function (value) {
-                return value + '%';
-              },
             },
           },
         },
       },
     });
 
-    setChart(newChart);
     chartRef.current = newChart;
 
     return () => {
@@ -141,38 +131,118 @@ const Main = () => {
         chartRef.current.destroy();
       }
     };
-  }, [weatherData]);
+  }, [futureWeather]);
+
+  // Function to toggle theme between dark and light
+  const toggleTheme = () => {
+    setDarkTheme((prevTheme) => !prevTheme);
+  };
+
+  const calculateSolarPowerOutput = (temperature, humidity, windSpeed) => {
+    const tempCoefficient = 0.05;
+    const humidityCoefficient = 0.02;
+    const windCoefficient = 0.03;
+    let basePowerOutput = 500; // MW/h (example base power output)
+    basePowerOutput -= temperature * tempCoefficient;
+    basePowerOutput -= humidity * humidityCoefficient;
+    basePowerOutput += windSpeed * windCoefficient;
+    basePowerOutput = Math.max(basePowerOutput, 0);
+    return basePowerOutput.toFixed(2);
+  };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center ${darkTheme ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}>
-      <div className="max-w-full flex items-center justify-center relative">
+    <div
+      className={`min-h-screen flex flex-col ${
+        darkTheme ? "bg-gray-900 text-white" : "bg-gray-100 text-black"
+      }`}
+    >
+      <div className="flex justify-between px-8 py-4">
+        <div className="flex items-center space-x-4">
+          <div className="border p-2">
+            <p className="text-lg font-semibold">
+              {currentWeather && currentWeather.time}
+            </p>
+          </div>
+          {currentWeather && (
+            <>
+              <div className="border p-2">
+                <p className="text-lg font-semibold">
+                  Temperature: {currentWeather.temperature}°C
+                </p>
+              </div>
+              <div className="border p-2">
+                <p className="text-lg font-semibold">
+                  Humidity: {currentWeather.humidity}%
+                </p>
+              </div>
+              <div className="border p-2">
+                <p className="text-lg font-semibold">
+                  Wind Speed: {currentWeather.windSpeed} km/h
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+        {/* Theme Toggle Button */}
+        <button
+          className="m-4 p-2 rounded-full bg-yellow-500 text-white"
+          onClick={toggleTheme}
+        >
+          {darkTheme ? (
+            <FiSun className="w-6 h-6" /> // Sun icon for light theme
+          ) : (
+            <FiMoon className="w-6 h-6" /> // Moon icon for dark theme
+          )}
+        </button>
+      </div>
+
+      {/* Table and Chart in One Row */}
+      <div className="flex">
         {/* Weather Table */}
-        <div className={`w-1/2 p-4 border border-gray-200 ${darkTheme ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
-          <h1 className="text-3xl font-bold mb-6 text-center">{darkTheme ? '6-Day Weather Prediction (Dark)' : '6-Day Weather Prediction (Light)'}</h1>
+        <div className="w-1/2 p-4 border border-gray-200">
+          <h1 className="text-xl font-bold mb-4 text-center text-gray-800">
+            6-Day Weather Prediction
+          </h1>
           <table className="w-full border-collapse border border-gray-200">
             <thead>
               <tr className="bg-gray-200">
-                <th className="p-4 border">Day</th>
-                <th className="p-4 border">Weather</th>
-                <th className="p-4 border">Power Outcome</th>
+                <th className="p-3 border">Day</th>
+                <th className="p-3 border">Date</th>
+                <th className="p-3 border">Weather</th>
+                <th className="p-3 border">Power Output (MW/h)</th>
+                <th className="p-3 border">Temperature (°C)</th>
+                <th className="p-3 border">Humidity (%)</th>
+                <th className="p-3 border">Wind Speed (km/h)</th>
               </tr>
             </thead>
             <tbody>
-              {weatherData.map((dayData, index) => (
+              {futureWeather.map((dayData, index) => (
                 <tr key={index} className="hover:bg-gray-100">
-                  <td className="p-4 border">{dayData.day}</td>
-                  <td className="p-4 border">
-                    <div className="flex items-center">
-                      <TiWeatherPartlySunny className="text-xl text-yellow-500 mr-2" />
-                      <span className="text-sm">{dayData.weather}</span>
-                    </div>
+                  <td className="p-3 border">
+                    {daysOfWeek[new Date(dayData.date).getDay()]}
                   </td>
-                  <td className="p-4 border">
+                  <td className="p-3 border">
+                    {new Date(dayData.date).toLocaleDateString()}
+                  </td>
+                  <td className="p-3 border flex items-center">
+                    <TiWeatherPartlySunny className="text-xl text-yellow-500 mr-2" />
+                    <span className="text-sm">{dayData.condition}</span>
+                  </td>
+                  <td className="p-3 border">
                     <div className="flex items-center">
                       <FaBolt className="text-xl text-blue-500 mr-2" />
-                      <span className="text-sm">{dayData.powerOutcome} MW</span>
+                      <span className="text-sm">
+                        {calculateSolarPowerOutput(
+                          dayData.temperature.max,
+                          dayData.humidity,
+                          dayData.windSpeed
+                        )}
+                      </span>
                     </div>
                   </td>
+                  <td className="p-3 border">{dayData.temperature.max}</td>
+                  <td className="p-3 border">{dayData.humidity}</td>
+                  <td className="p-3 border">{dayData.windSpeed}</td>
                 </tr>
               ))}
             </tbody>
@@ -183,24 +253,6 @@ const Main = () => {
         <div className="w-1/2 p-4">
           <canvas id="powerChart" width="400" height="200"></canvas>
         </div>
-
-        {/* Digital Clock, Temperature, and Humidity Indicators */}
-        <div className={`absolute top-0 right-0 m-8 flex flex-col items-end space-y-2 ${darkTheme ? 'text-white' : 'text-black'}`}>
-          <div className="border p-2">
-            <p className="text-lg font-semibold">{currentTime}</p>
-          </div>
-          <div className="border p-2">
-            <p className="text-lg font-semibold">Temperature: 25°C</p>
-          </div>
-          <div className="border p-2">
-            <p className="text-lg font-semibold">Humidity: 60%</p>
-          </div>
-        </div>
-
-        {/* Toggle Theme Button */}
-        <button className="absolute bottom-0 right-0 m-8 p-2 rounded-full bg-yellow-500 text-white" onClick={toggleTheme}>
-          {darkTheme ? 'Light Mode' : 'Dark Mode'}
-        </button>
       </div>
     </div>
   );
