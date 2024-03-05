@@ -1,5 +1,6 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react/no-unescaped-entities */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
 import { TiWeatherPartlySunny } from "react-icons/ti";
 import { FiSun, FiMoon } from "react-icons/fi";
@@ -14,11 +15,20 @@ const Main = () => {
   const [futureWeather, setFutureWeather] = useState([]);
   const [darkTheme, setDarkTheme] = useState(false);
   const [displayTable, setDisplayTable] = useState(true);
+  const [showModal, setShowModal] = useState(true);
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
   const chartRef = useRef(null);
 
   useEffect(() => {
+    if (!showModal) {
+      fetchData();
+    }
+  }, [showModal]);
+
+  const fetchData = () => {
     axios
-      .get("http://localhost:3001/api/CurrentWeather")
+      .get(`http://localhost:3001/api/CurrentWeather?city=${city}&country=${country}`)
       .then((response) => {
         setCurrentWeather(response.data);
       })
@@ -27,7 +37,7 @@ const Main = () => {
       });
 
     axios
-      .get("http://localhost:3001/api/futureWeather")
+      .get(`http://localhost:3001/api/futureWeather?city=${city}&country=${country}`)
       .then((response) => {
         setFutureWeather(response.data);
       })
@@ -48,7 +58,7 @@ const Main = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  };
 
   const toggleTheme = () => {
     setDarkTheme((prevTheme) => !prevTheme);
@@ -128,12 +138,56 @@ const Main = () => {
     },
   ];
 
+  const handleModalSubmit = () => {
+    setShowModal(false);
+    fetchData();
+  };
+
   return (
     <div
       className={`min-h-screen flex flex-col ${
         darkTheme ? "bg-gray-900 text-white" : "bg-gray-100 text-black"
       }`}
     >
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+          <div className="bg-white p-8 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-center">
+              Please enter your location
+            </h2>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Country
+              </label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                placeholder="Your country"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                City
+              </label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                placeholder="Your city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
+            </div>
+            <button
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full w-full"
+              onClick={handleModalSubmit}
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      )}
       {/* Today's Data */}
       {currentWeather && (
         <div className="px-8 py-4 border-b border-gray-200">
