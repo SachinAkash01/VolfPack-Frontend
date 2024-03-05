@@ -40,3 +40,10 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Responsive Styles */
+@media screen and (max-width: 640px) {
+  .max-w-md {
+    max-width: 90%;
+  }
+}
