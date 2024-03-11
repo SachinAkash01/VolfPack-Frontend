@@ -1,6 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
 import { TiWeatherPartlySunny } from "react-icons/ti";
 import { FiSun, FiMoon } from "react-icons/fi";
@@ -18,7 +15,8 @@ const Main = () => {
   const [showModal, setShowModal] = useState(true);
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
-  const chartRef = useRef(null);
+  const [displayMap, setDisplayMap] = useState(false); // State for map display
+  const [displayGraph, setDisplayGraph] = useState(false); // State for graph display
 
   useEffect(() => {
     if (!showModal) {
@@ -27,8 +25,11 @@ const Main = () => {
   }, [showModal]);
 
   const fetchData = () => {
+    // Fetching weather data
     axios
-      .get(`http://localhost:3001/api/CurrentWeather?city=${city}&country=${country}`)
+      .get(
+        `http://localhost:3001/api/CurrentWeather?city=${city}&country=${country}`
+      )
       .then((response) => {
         setCurrentWeather(response.data);
       })
@@ -37,7 +38,9 @@ const Main = () => {
       });
 
     axios
-      .get(`http://localhost:3001/api/futureWeather?city=${city}&country=${country}`)
+      .get(
+        `http://localhost:3001/api/futureWeather?city=${city}&country=${country}`
+      )
       .then((response) => {
         setFutureWeather(response.data);
       })
@@ -45,6 +48,7 @@ const Main = () => {
         console.error("Error fetching future weather data:", error);
       });
 
+    // Setting interval to update current time
     const interval = setInterval(() => {
       setCurrentWeather((prevWeather) => {
         if (prevWeather) {
@@ -142,7 +146,6 @@ const Main = () => {
     setShowModal(false);
     fetchData();
   };
-
   return (
     <div
       className={`min-h-screen flex flex-col ${
@@ -243,29 +246,55 @@ const Main = () => {
 
       {/* Button Group */}
       <div className="flex justify-center mb-4">
-        <button
-          className={`px-4 py-2 rounded-full ${
-            displayTable
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-800"
-          } mr-4 shadow-md focus:outline-none`}
-          onClick={() => setDisplayTable(true)}
-        >
-          Table
-        </button>
-        <button
-          className={`px-4 py-2 rounded-full ${
-            !displayTable
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-800"
-          } shadow-md focus:outline-none`}
-          onClick={() => setDisplayTable(false)}
-        >
-          Graph
-        </button>
+        {/* Button Group */}
+        {/* Button Group */}
+        <div className="flex justify-center mb-4">
+          <button
+            className={`px-4 py-2 rounded-full ${
+              displayTable
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 text-gray-800"
+            } mr-4 shadow-md focus:outline-none`}
+            onClick={() => {
+              setDisplayTable(true);
+              setDisplayMap(false); // Ensure map is hidden when switching to table
+              setDisplayGraph(false); // Ensure graph is hidden when switching to table
+            }}
+          >
+            Table
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full ${
+              !displayTable && !displayMap
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 text-gray-800"
+            } mr-4 shadow-md focus:outline-none`}
+            onClick={() => {
+              setDisplayGraph(true);
+              setDisplayTable(false); // Ensure table is hidden when switching to graph
+              setDisplayMap(false); // Ensure map is hidden when switching to graph
+            }}
+          >
+            Graph
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full ${
+              displayMap
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 text-gray-800"
+            } shadow-md focus:outline-none`}
+            onClick={() => {
+              setDisplayMap(true);
+              setDisplayTable(false); // Ensure table is hidden when switching to map
+              setDisplayGraph(false); // Ensure graph is hidden when switching to map
+            }}
+          >
+            Map
+          </button>
+        </div>
       </div>
 
-      {/* Display Table or Chart */}
+      {/* Display Table or Chart or Map*/}
       <div className="flex flex-col items-center">
         {displayTable ? (
           <div className="w-full sm:w-3/4 p-4 border border-gray-200">
@@ -324,9 +353,26 @@ const Main = () => {
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : null}
+        {/* Display Graph */}
+        {displayGraph && (
           <div className="w-full sm:w-3/4 p-4">
             <Chart options={options} series={series} type="line" height={400} />
+          </div>
+        )}
+        {/* Display Map */}
+        {displayMap && (
+          <div className="w-full sm:w-3/4 p-4">
+            {/* Integrate Google Maps here to show the location */}
+            <iframe
+              title="Location Map"
+              width="100%"
+              height="400"
+              frameBorder="1"
+              style={{ border: 2 }}
+              src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyANBtUA7xd_c0W5ehy0Dewe9899RZMXkRg&q=${city},${country}`}
+              allowFullScreen
+            ></iframe>
           </div>
         )}
       </div>
