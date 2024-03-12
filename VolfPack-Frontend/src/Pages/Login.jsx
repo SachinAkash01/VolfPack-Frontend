@@ -22,20 +22,22 @@ function Login() {
       try {
         // Send authentication request to the server
         const response = await axios.post("http://localhost:3001/api/login", {
-          email: email, // Pass email and password in the correct format
+          email: email,
           password: password,
         });
-
-        // Extract user ID, username, and token from the response
-        const { token, username } = response.data;
-
-        // Store the email, user ID, and token in cookies
-        Cookies.set("email", email, { expires: 7 }); // Expires in 7 days
-        Cookies.set("jwtToken", token, { expires: 1 }); // Expires in 1 day
+  
+        // Extract user ID, username, token, and functions from the response
+        const { token, username, functions } = response.data;
+  
+  
+        // Store the email, user ID, token, and functions in cookies
+        Cookies.set("email", email, { expires: 7 });
+        Cookies.set("jwtToken", token, { expires: 1 });
         Cookies.set("username", username, { expires: 7 });
-
+        Cookies.set("functions", functions, { expires: 7 });
+  
         // Navigate to the Main page after successful login
-        navigate("/Login/Main");
+        navigate("/Main");
       } catch (error) {
         // Handle authentication error
         console.error("Login error:", error);
@@ -48,6 +50,7 @@ function Login() {
       setIncorrectPassword(true);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-500">

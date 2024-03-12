@@ -7,6 +7,7 @@ function AdminPanel() {
     username: "",
     email: "",
     password: "",
+    functions: [],
   });
   const [showLoginModal, setShowLoginModal] = useState(true);
   const [adminCredentials, setAdminCredentials] = useState({
@@ -14,7 +15,12 @@ function AdminPanel() {
     password: "",
   });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+    functions: [],
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -32,7 +38,7 @@ function AdminPanel() {
   const addUser = async () => {
     try {
       await axios.post("http://localhost:3001/api/user", newUser);
-      setNewUser({ username: "", email: "", password: "" });
+      setNewUser({ username: "", email: "", password: "", functions: [] });
       fetchUsers();
     } catch (error) {
       console.error(error);
@@ -56,6 +62,36 @@ function AdminPanel() {
     }));
   };
 
+  const handleFunctionChangeForNewUser = (e) => {
+    const { value, checked } = e.target;
+    if (checked) {
+      setNewUser((prevUser) => ({
+        ...prevUser,
+        functions: [...prevUser.functions, value],
+      }));
+    } else {
+      setNewUser((prevUser) => ({
+        ...prevUser,
+        functions: prevUser.functions.filter((func) => func !== value),
+      }));
+    }
+  };
+
+  const handleFunctionChangeForUpdate = (e) => {
+    const { value, checked } = e.target;
+    if (checked) {
+      setSelectedUser((prevUser) => ({
+        ...prevUser,
+        functions: [...prevUser.functions, value],
+      }));
+    } else {
+      setSelectedUser((prevUser) => ({
+        ...prevUser,
+        functions: prevUser.functions.filter((func) => func !== value),
+      }));
+    }
+  };
+
   const handleAdminLogin = () => {
     if (
       adminCredentials.username === "ADMIN" &&
@@ -74,7 +110,12 @@ function AdminPanel() {
 
   const closeUpdateModal = () => {
     setShowUpdateModal(false);
-    setSelectedUser(null);
+    setSelectedUser({
+      username: "",
+      email: "",
+      password: "",
+      functions: [],
+    });
   };
 
   const updateUser = async () => {
@@ -161,6 +202,33 @@ function AdminPanel() {
                 }
                 className="w-full p-2 border rounded-md mb-4"
               />
+              <div>
+                <label className="mr-2">Table:</label>
+                <input
+                  type="checkbox"
+                  value="table"
+                  checked={selectedUser.functions.includes("table")}
+                  onChange={handleFunctionChangeForUpdate}
+                />
+              </div>
+              <div>
+                <label className="mr-2">Graph:</label>
+                <input
+                  type="checkbox"
+                  value="graph"
+                  checked={selectedUser.functions.includes("graph")}
+                  onChange={handleFunctionChangeForUpdate}
+                />
+              </div>
+              <div>
+                <label className="mr-2">Map:</label>
+                <input
+                  type="checkbox"
+                  value="map"
+                  checked={selectedUser.functions.includes("map")}
+                  onChange={handleFunctionChangeForUpdate}
+                />
+              </div>
             </form>
             <div className="flex justify-end">
               <button
@@ -206,6 +274,33 @@ function AdminPanel() {
             onChange={handleChange}
             className="w-full p-2 border rounded-md mb-4"
           />
+          <div>
+            <label className="mr-2">Table:</label>
+            <input
+              type="checkbox"
+              value="table"
+              checked={newUser.functions.includes("table")}
+              onChange={handleFunctionChangeForNewUser}
+            />
+          </div>
+          <div>
+            <label className="mr-2">Graph:</label>
+            <input
+              type="checkbox"
+              value="graph"
+              checked={newUser.functions.includes("graph")}
+              onChange={handleFunctionChangeForNewUser}
+            />
+          </div>
+          <div>
+            <label className="mr-2">Map:</label>
+            <input
+              type="checkbox"
+              value="map"
+              checked={newUser.functions.includes("map")}
+              onChange={handleFunctionChangeForNewUser}
+            />
+          </div>
           <button
             onClick={addUser}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"

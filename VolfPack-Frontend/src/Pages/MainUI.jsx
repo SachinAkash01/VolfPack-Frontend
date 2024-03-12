@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+/* eslint-disable react/no-unescaped-entities */
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect } from "react";
 import { TiWeatherPartlySunny } from "react-icons/ti";
 import { FiSun, FiMoon } from "react-icons/fi";
 import { FaBolt } from "react-icons/fa";
@@ -17,10 +19,12 @@ const Main = () => {
   const [city, setCity] = useState("");
   const [displayMap, setDisplayMap] = useState(false); // State for map display
   const [displayGraph, setDisplayGraph] = useState(false); // State for graph display
+  const [allowedFunctions, setAllowedFunctions] = useState([]); // State for allowed functions from cookie
 
   useEffect(() => {
     if (!showModal) {
       fetchData();
+      checkCookieAllowedFunctions();
     }
   }, [showModal]);
 
@@ -145,7 +149,18 @@ const Main = () => {
   const handleModalSubmit = () => {
     setShowModal(false);
     fetchData();
+    checkCookieAllowedFunctions();
   };
+
+  const checkCookieAllowedFunctions = () => {
+    const cookieData = decodeURIComponent(document.cookie).split('; ');
+    const allowedFunctionsCookie = cookieData.find(cookie => cookie.startsWith('functions'));
+    if (allowedFunctionsCookie) {
+      const allowedFunctionsValue = allowedFunctionsCookie.split('=')[1];
+      setAllowedFunctions(allowedFunctionsValue.split(','));
+    }
+  };
+
   return (
     <div
       className={`min-h-screen flex flex-col ${
@@ -244,11 +259,9 @@ const Main = () => {
         </button>
       </div>
 
-      {/* Button Group */}
+      {/* Display Button Group */}
       <div className="flex justify-center mb-4">
-        {/* Button Group */}
-        {/* Button Group */}
-        <div className="flex justify-center mb-4">
+        {allowedFunctions.includes('table') && (
           <button
             className={`px-4 py-2 rounded-full ${
               displayTable
@@ -263,6 +276,8 @@ const Main = () => {
           >
             Table
           </button>
+        )}
+        {allowedFunctions.includes('graph') && (
           <button
             className={`px-4 py-2 rounded-full ${
               !displayTable && !displayMap
@@ -277,6 +292,8 @@ const Main = () => {
           >
             Graph
           </button>
+        )}
+        {allowedFunctions.includes('map') && (
           <button
             className={`px-4 py-2 rounded-full ${
               displayMap
@@ -291,12 +308,12 @@ const Main = () => {
           >
             Map
           </button>
-        </div>
+        )}
       </div>
 
       {/* Display Table or Chart or Map*/}
       <div className="flex flex-col items-center">
-        {displayTable ? (
+        {displayTable && allowedFunctions.includes('table') && (
           <div className="w-full sm:w-3/4 p-4 border border-gray-200">
             <h1 className="text-xl font-bold mb-4 text-center text-gray-800">
               Future Weather Data
@@ -338,7 +355,6 @@ const Main = () => {
                         </span>
                       </div>
                     </td>
-
                     <td className="p-2 border text-center">
                       {dayData.temperature.max}
                     </td>
@@ -353,15 +369,15 @@ const Main = () => {
               </tbody>
             </table>
           </div>
-        ) : null}
+        )}
         {/* Display Graph */}
-        {displayGraph && (
+        {displayGraph && allowedFunctions.includes('graph') && (
           <div className="w-full sm:w-3/4 p-4">
             <Chart options={options} series={series} type="line" height={400} />
           </div>
         )}
         {/* Display Map */}
-        {displayMap && (
+        {displayMap && allowedFunctions.includes('map') && (
           <div className="w-full sm:w-3/4 p-4">
             {/* Integrate Google Maps here to show the location */}
             <iframe
