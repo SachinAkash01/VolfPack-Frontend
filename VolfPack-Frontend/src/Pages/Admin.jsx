@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 function AdminPanel() {
@@ -120,9 +120,14 @@ function AdminPanel() {
 
   const updateUser = async () => {
     try {
+      const { email, functions } = selectedUser;
+      const userData = {
+        email,
+        functions,
+      };
       await axios.put(
         `http://localhost:3001/api/update/${selectedUser.username}`,
-        selectedUser
+        userData
       );
       fetchUsers();
       closeUpdateModal();
