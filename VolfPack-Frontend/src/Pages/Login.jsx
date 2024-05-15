@@ -1,4 +1,4 @@
-/* eslint-disable react/no-unescaped-entities */
+// Copyright ©2024 Uni-Coders, All rights reserved.
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
