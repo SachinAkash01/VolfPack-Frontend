@@ -1,5 +1,4 @@
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable react-hooks/exhaustive-deps */
+// Copyright ©2024 Uni-Coders, All rights reserved.
 import { useState, useEffect } from "react";
 import { TiWeatherPartlySunny } from "react-icons/ti";
 import { FiSun, FiMoon } from "react-icons/fi";
