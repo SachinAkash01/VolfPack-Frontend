@@ -1,3 +1,4 @@
+// Copyright ©2024 Uni-Coders, All rights reserved.
 import "react";
 import MainUI from "../src/Pages/MainUI";
 import Admin from "./Pages/Admin";
